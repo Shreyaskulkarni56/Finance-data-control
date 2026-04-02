@@ -1,0 +1,14 @@
+# Ignore all node_modules
+node_modules/
+
+# Ignore .env file
+.env
+
+# Ignore prisma/dev.db
+prisma/dev.db
+
+# Ignore prisma/dev.db-journal
+prisma/dev.db-journal
+
+# Ignore src/generated/
+src/generated/
