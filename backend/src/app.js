@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 app.use('/api/auth', require('./routes/auth.routes'));
-// app.use('/api/users',        require('./routes/user.routes'));
+app.use('/api/users', require('./routes/user.routes'));
 app.use('/api/transactions', require('./routes/transaction.routes'));
 app.use('/api/dashboard', require('./routes/dashboard.routes'));
 
