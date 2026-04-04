@@ -1,18 +1,14 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
 import Unauthorized from "./pages/Unauthorized";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Users from "./pages/Users";
-// import './App.css'
-
 
 export default function App() {
-
-
-
   return (
     <Routes>
       {/* Public */}
@@ -23,21 +19,21 @@ export default function App() {
       {/* All logged-in roles */}
       <Route path="/transactions" element={
         <ProtectedRoute>
-          <Transactions />
+          <Layout><Transactions /></Layout>
         </ProtectedRoute>
       } />
 
       {/* ANALYST + ADMIN only */}
       <Route path="/dashboard" element={
         <ProtectedRoute roles={["ADMIN", "ANALYST"]}>
-          <Dashboard />
+          <Layout><Dashboard /></Layout>
         </ProtectedRoute>
       } />
 
       {/* ADMIN only */}
       <Route path="/users" element={
         <ProtectedRoute roles={["ADMIN"]}>
-          <Users />
+          <Layout><Users /></Layout>
         </ProtectedRoute>
       } />
 
@@ -46,4 +42,3 @@ export default function App() {
     </Routes>
   );
 }
-
