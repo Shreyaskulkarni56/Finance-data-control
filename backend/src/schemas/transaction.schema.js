@@ -5,7 +5,8 @@ const createTransactionSchema = z.object({
     type: z.enum(['INCOME', 'EXPENSE'], { message: 'Type must be INCOME or EXPENSE.' }),
     category: z.string().min(1, 'Category is required.'),
     date: z.string().refine(d => !isNaN(Date.parse(d)), 'Invalid date format.'),
-    notes: z.string().optional()
+    notes: z.string().optional(),
+    userId: z.string().optional()
 });
 
 const updateTransactionSchema = z.object({

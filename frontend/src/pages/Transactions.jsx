@@ -4,8 +4,9 @@ import {
     getTransactions, createTransaction,
     updateTransaction, deleteTransaction
 } from "../api/transactions";
+import { getUsers } from "../api/users";
 
-const emptyForm = { amount: "", type: "INCOME", category: "", date: "", notes: "" };
+const emptyForm = { amount: "", type: "INCOME", category: "", date: "", notes: "", userId: "" };
 
 export default function Transactions() {
     const { user } = useAuth();
@@ -15,6 +16,7 @@ export default function Transactions() {
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [users, setUsers] = useState([]);
 
     // Filters
     const [filters, setFilters] = useState({ type: "", category: "", from: "", to: "" });
@@ -28,7 +30,6 @@ export default function Transactions() {
     const fetchTransactions = async () => {
         setLoading(true);
         try {
-            // Remove empty filter values
             const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v));
             const res = await getTransactions(params);
             setTransactions(res.data.data || res.data);
@@ -39,15 +40,29 @@ export default function Transactions() {
         }
     };
 
-    useEffect(() => { fetchTransactions(); }, []);
+    // Fetch users list for ADMIN dropdown
+    const fetchUsers = async () => {
+        if (user?.role === "ADMIN") {
+            try {
+                const res = await getUsers();
+                setUsers(res.data.data || res.data);
+            } catch {
+                console.error("Failed to load users");
+            }
+        }
+    };
+
+    useEffect(() => {
+        fetchTransactions();
+        fetchUsers();
+    }, []);
 
     const handleFilterChange = e => setFilters(p => ({ ...p, [e.target.name]: e.target.value }));
-
     const handleFormChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
     const handleEdit = (t) => {
         setEditId(t.id);
-        setForm({ amount: t.amount, type: t.type, category: t.category, date: t.date?.slice(0, 10), notes: t.notes || "" });
+        setForm({ amount: t.amount, type: t.type, category: t.category, date: t.date?.slice(0, 10), notes: t.notes || "", userId: "" });
         setShowForm(true);
     };
 
@@ -184,6 +199,19 @@ export default function Transactions() {
                                 className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm" />
                             <input name="notes" value={form.notes} onChange={handleFormChange}
                                 placeholder="Notes (optional)" className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm" />
+
+                            {/* ADMIN only — assign transaction to a specific user */}
+                            {user?.role === "ADMIN" && !editId && (
+                                <select name="userId" value={form.userId} onChange={handleFormChange}
+                                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm">
+                                    <option value="">Assign to myself</option>
+                                    {users.map(u => (
+                                        <option key={u.id} value={u.id}>
+                                            {u.name} ({u.role})
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
                         <div className="flex justify-end gap-3 mt-5">
                             <button onClick={() => { setShowForm(false); setEditId(null); }}

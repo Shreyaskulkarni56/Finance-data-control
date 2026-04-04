@@ -1,15 +1,22 @@
 const prisma = require('../lib/prisma');
 
 // Create a new transaction
-const createTransaction = async (data, userId) => {
+const createTransaction = async (data, userId, userRole) => {
+    // ADMIN can assign a transaction to another user by passing userId in request body
+    // ANALYST always creates transactions for themselves
+    console.log("data.userId:", data.userId);
+    console.log("createTransaction called with:", { data, userId, userRole });
+    const targetUserId = (userRole === 'ADMIN' && data.userId) ? data.userId : userId;
+    console.log("targetUserId:", targetUserId);
+
     return await prisma.transaction.create({
         data: {
             amount: data.amount,
-            type: data.type.toUpperCase(),      // normalize to "INCOME" or "EXPENSE"
+            type: data.type.toUpperCase(),
             category: data.category,
             date: new Date(data.date),
             notes: data.notes || null,
-            userId,                                 // taken from JWT token, not request body
+            userId: targetUserId,
         }
     });
 };
@@ -17,7 +24,7 @@ const createTransaction = async (data, userId) => {
 // Get all transactions with optional filters
 const getTransactions = async (filters, userId, userRole) => {
     const where = {
-        isDeleted: false,      // never return soft-deleted records
+        isDeleted: false,
     };
 
     // ADMIN and ANALYST see all users' transactions
@@ -25,9 +32,6 @@ const getTransactions = async (filters, userId, userRole) => {
     if (userRole === 'VIEWER') {
         where.userId = userId;
     }
-
-    // Optional filters from query params
-    // e.g. GET /api/transactions?type=INCOME&category=salary&from=2024-01-01&to=2024-12-31
     if (filters.type) where.type = filters.type.toUpperCase();
     if (filters.category) where.category = filters.category;
     if (filters.from || filters.to) {
@@ -38,10 +42,10 @@ const getTransactions = async (filters, userId, userRole) => {
 
     return await prisma.transaction.findMany({
         where,
-        orderBy: { date: 'desc' },   // most recent first
+        orderBy: { date: 'desc' },
         include: {
             user: {
-                select: { id: true, name: true, email: true }  // include basic user info
+                select: { id: true, name: true, email: true }
             }
         }
     });
@@ -59,7 +63,6 @@ const getTransactionById = async (id, userId, userRole) => {
         throw error;
     }
 
-    // VIEWER can only see their own transaction
     if (userRole === 'VIEWER' && transaction.userId !== userId) {
         const error = new Error('Access denied.');
         error.statusCode = 403;
@@ -71,7 +74,6 @@ const getTransactionById = async (id, userId, userRole) => {
 
 // Update a transaction
 const updateTransaction = async (id, data, userId, userRole) => {
-    // First check it exists
     await getTransactionById(id, userId, userRole);
 
     return await prisma.transaction.update({
