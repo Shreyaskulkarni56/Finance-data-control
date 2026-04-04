@@ -3,6 +3,8 @@ const router = express.Router();
 const controller = require('../controllers/transaction.controller');
 const authenticate = require('../middleware/authenticate');
 const authorize = require('../middleware/authorize');
+const validate = require('../middleware/validate');
+const { createTransactionSchema, updateTransactionSchema } = require('../schemas/transaction.schema');
 
 // All transaction routes require login
 router.use(authenticate);
@@ -14,9 +16,9 @@ router.use(authenticate);
 // DELETE /api/transactions/:id     → ADMIN only
 
 router.get('/', authorize('ADMIN', 'ANALYST', 'VIEWER'), controller.getTransactions);
-router.post('/', authorize('ADMIN', 'ANALYST'), controller.createTransaction);
+router.post('/', authorize('ADMIN', 'ANALYST'), validate(createTransactionSchema), controller.createTransaction);
 router.get('/:id', authorize('ADMIN', 'ANALYST', 'VIEWER'), controller.getTransactionById);
-router.put('/:id', authorize('ADMIN', 'ANALYST'), controller.updateTransaction);
+router.put('/:id', authorize('ADMIN', 'ANALYST'), validate(updateTransactionSchema), controller.updateTransaction);
 router.delete('/:id', authorize('ADMIN'), controller.deleteTransaction);
 
 module.exports = router;
